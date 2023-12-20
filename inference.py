@@ -5,11 +5,27 @@ import sys
 import patoolib
 from pathlib import Path
 from shutil import rmtree
+import time
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from colorizator import MangaColorizator
+
+import time
+from datetime import datetime
+import threading
+
+def print_time():
+    while True:
+        print(datetime.now().strftime('%H:%M:%S'))
+        time.sleep(60)
+
+# Crea un hilo que ejecutará la función print_time
+t = threading.Thread(target=print_time)
+
+# Inicia el hilo
+t.start()
 
 def extract_cbr(file, out_dir):
     patoolib.extract_archive(file,  outdir = out_dir, verbosity = 1, interactive = False)
@@ -28,9 +44,12 @@ def process_image(image, colorizator, args):
     return colorizator.colorize()
 
 def colorize_single_image(image_path, save_path, colorizator, args):
+    start_time = time.time()
     image = plt.imread(image_path)
     colorization = process_image(image, colorizator, args)
     plt.imsave(save_path, colorization)
+    end_time = time.time()
+    print(f"Imagen {image_path} coloreada en {end_time - start_time} segundos.")
     return True
 
 def colorize_images(target_path, colorizator, args):
@@ -98,6 +117,10 @@ if __name__ == "__main__":
         if not os.path.exists(colorization_path):
             os.makedirs(colorization_path)
         colorize_images(colorization_path, colorizer, args)
+        # Procesar archivos .cbr en la carpeta
+        cbr_files = [x.as_posix() for x in Path(args.path).rglob("*.cbr")]
+        for cbr_file in cbr_files:
+            colorize_cbr(cbr_file, colorizer, args)
     elif os.path.isfile(args.path):
         split = os.path.splitext(args.path)
         if split[1].lower() in ('.jpg', '.png', '.jpeg'):
@@ -105,7 +128,3 @@ if __name__ == "__main__":
             colorize_single_image(args.path, new_image_path, colorizer, args)
         elif split[1].lower() in ('.cbr'):
             colorize_cbr(args.path, colorizer, args)
-        else:
-            print('Wrong format')
-    else:
-        print('Wrong path')
