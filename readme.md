@@ -1,3 +1,8 @@
+# Improvements
+1. Added the cbr colorizer (bug which creates it in the same location instead of a subfolder, fix in progress).
+2. Gradio interface creation (in progress)
+3. Creating exe installer
+
 # Automatic colorization
 
 1. Download [generator](https://drive.google.com/file/d/1qmxUEKADkEM4iYLp1fpPLLKnfZ6tcF-t/view?usp=sharing) and [denoiser](https://drive.google.com/file/d/161oyQcYpdkVdw8gKz_MA8RD-Wtg9XDp3/view?usp=sharing) weights. Put generator and extractor weights in `networks` and denoiser weights in `denoising/models`.
