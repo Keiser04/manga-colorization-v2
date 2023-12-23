@@ -87,7 +87,11 @@ def colorize_cbr(file_path, colorizator, args):
     
     result_images = []
     for image_path in images:
-        save_path = os.path.join(temp_path, os.path.basename(image_path))
+        # Mantén la estructura de las subcarpetas al definir save_path
+        relative_path = os.path.relpath(image_path, temp_path)
+        save_path = os.path.join(temp_path, relative_path)
+        # Asegúrate de que la subcarpeta exista
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
         save_path = convert_webp_to_png(save_path, temp_path)
         convert_to_bw(save_path)
         res_flag = colorize_single_image(image_path, save_path, colorizator, args)
