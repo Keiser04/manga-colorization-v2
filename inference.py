@@ -9,23 +9,22 @@ import time
 
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 
 from colorizator import MangaColorizator
 
-import time
-from datetime import datetime
-import threading
+def convert_to_bw(img_path):
+    color_image = Image.open(img_path)
+    bw = color_image.convert('L')
+    bw.save(img_path)
 
-def print_time():
-    while True:
-        print(datetime.now().strftime('%H:%M:%S'))
-        time.sleep(60)
-
-# Crea un hilo que ejecutará la función print_time
-t = threading.Thread(target=print_time)
-
-# Inicia el hilo
-t.start()
+def convert_webp_to_png(img_path, temp_folder):
+    if img_path.lower().endswith('.webp'):
+        img = Image.open(img_path)
+        png_path = os.path.join(temp_folder, os.path.basename(img_path)[:-5] + '.png')
+        img.save(png_path, 'PNG')
+        return png_path
+    return img_path
 
 def extract_cbr(file, out_dir):
     patoolib.extract_archive(file,  outdir = out_dir, verbosity = 1, interactive = False)
@@ -45,15 +44,31 @@ def process_image(image, colorizator, args):
 
 def colorize_single_image(image_path, save_path, colorizator, args):
     start_time = time.time()
-    image = plt.imread(image_path)
+    temp_path = os.path.join('temp_colorization', os.path.basename(image_path))
+    shutil.copy2(image_path, temp_path)
+    temp_path = convert_webp_to_png(temp_path, 'temp_colorization')
+    convert_to_bw(temp_path)
+
+    try:
+        # Abre la imagen con PIL, que puede manejar varios formatos de imagen
+        image = Image.open(temp_path)
+        # Guarda la imagen como PNG
+        image.save(temp_path, 'PNG')
+        # Ahora puedes abrir la imagen como PNG
+        image = plt.imread(temp_path)
+    except Exception as e:
+        print(f"Error al abrir/guardar la imagen {temp_path}: {str(e)}")
+        return False
+
     colorization = process_image(image, colorizator, args)
     plt.imsave(save_path, colorization)
+    os.remove(temp_path)
     end_time = time.time()
     print(f"Imagen {image_path} coloreada en {end_time - start_time} segundos.")
     return True
 
 def colorize_images(target_path, colorizator, args):
-    images = [x.as_posix() for x in Path(args.path).rglob("*.[pPjJ][nNpP][gG]")]
+    images = [os.path.join(args.path, x) for x in os.listdir(args.path) if x.lower().endswith(('.jpg', '.png', '.jpeg', '.webp'))]
     for image_path in images:
         save_path = os.path.join(target_path, os.path.basename(image_path))
         colorize_single_image(image_path, save_path, colorizator, args)
@@ -72,18 +87,14 @@ def colorize_cbr(file_path, colorizator, args):
     
     result_images = []
     for image_path in images:
-        save_path = image_path
-        
-        path, ext = os.path.splitext(save_path)
-        if (ext != '.png'):
-            save_path = path + '.png'
-        
+        save_path = os.path.join(temp_path, os.path.basename(image_path))
+        save_path = convert_webp_to_png(save_path, temp_path)
+        convert_to_bw(save_path)
         res_flag = colorize_single_image(image_path, save_path, colorizator, args)
         
         result_images.append(save_path if res_flag else image_path)
         
-    
-    result_name = os.path.join(os.path.dirname(file_path), file_name + '_colorized.cbz')
+    result_name = os.path.join(os.path.dirname(file_path), 'colorization', file_name + '_colorized.cbz')
     
     create_cbz(result_name, result_images)
     
@@ -112,6 +123,7 @@ if __name__ == "__main__":
     else:
         device = 'cpu'
     colorizer = MangaColorizator(device, args.generator, args.extractor)
+    
     if os.path.isdir(args.path):
         colorization_path = os.path.join(args.path, 'colorization')
         if not os.path.exists(colorization_path):
@@ -123,7 +135,7 @@ if __name__ == "__main__":
             colorize_cbr(cbr_file, colorizer, args)
     elif os.path.isfile(args.path):
         split = os.path.splitext(args.path)
-        if split[1].lower() in ('.jpg', '.png', '.jpeg'):
+        if split[1].lower() in ('.jpg', '.png', '.jpeg', '.webp'):
             new_image_path = split[0] + '_colorized' + '.png'
             colorize_single_image(args.path, new_image_path, colorizer, args)
         elif split[1].lower() in ('.cbr'):
