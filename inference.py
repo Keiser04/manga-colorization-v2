@@ -44,9 +44,12 @@ def process_image(image, colorizator, args):
 
 def colorize_single_image(image_path, save_path, colorizator, args):
     start_time = time.time()
-    temp_path = os.path.join('temp_colorization', os.path.basename(image_path))
+    temp_dir = 'temp_colorization'
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+    temp_path = os.path.join(temp_dir, os.path.basename(image_path))
     shutil.copy2(image_path, temp_path)
-    temp_path = convert_webp_to_png(temp_path, 'temp_colorization')
+    temp_path = convert_webp_to_png(temp_path, temp_dir)
     convert_to_bw(temp_path)
 
     try:
