@@ -42,13 +42,6 @@ def process_image(image, colorizator, args):
     colorizator.set_image(image, args.size, args.denoiser, args.denoiser_sigma)
     return colorizator.colorize()
 
-import os
-import torch
-import time
-import shutil
-from PIL import Image
-import matplotlib.pyplot as plt
-
 def colorize_single_image(image_path, save_path, colorizator, args):
     start_time = time.time()
     temp_dir = 'temp_colorization'
@@ -70,17 +63,8 @@ def colorize_single_image(image_path, save_path, colorizator, args):
         print(f"Error al abrir/guardar la imagen {temp_path}: {str(e)}")
         return False
 
-    while True:
-        try:
-            colorization = process_image(image, colorizator, args)
-            plt.imsave(save_path, colorization)
-            break
-        except torch.cuda.OutOfMemoryError:
-            print("GPU out of memory for size {}. Trying with smaller size.".format(args.size))
-            args.size -= 32
-            if args.size <= 0:
-                raise ValueError("Image size is too small.")
-
+    colorization = process_image(image, colorizator, args)
+    plt.imsave(save_path, colorization)
     os.remove(temp_path)
     end_time = time.time()
     print(f"Imagen {image_path} coloreada en {end_time - start_time} segundos.")
