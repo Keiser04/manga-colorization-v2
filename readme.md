@@ -1,7 +1,12 @@
-# Improvements
+# Improvements 
 1. Added the cbr colorizer (bug which creates it in the same location instead of a subfolder, fix in progress).
-2. Gradio interface creation (in progress)
-3. Creating exe installer
+2. An exception has been created to avoid graph overflow. If you cannot color with x size, you will subtract 32 until you can use it.
+
+# Improvements (in progress)
+1. Gradio interface creation (in progress)
+2. Creating bat installer
+3. Exclude .DS_Store files
+4. Inclusion of Real Anime-ESRGAN for output and MangaDigital for input.
 
 # Automatic colorization
 
